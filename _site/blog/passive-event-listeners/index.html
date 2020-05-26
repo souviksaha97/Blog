@@ -5,11 +5,11 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Tag Archive</title>
-  <meta name="description" content="A website for my best friend">
+  <title>不得不说的 Passive Event Listeners</title>
+  <meta name="description" content="被报了一个大 Bug，起初以为是 iScroll 的锅，意外发现是自己忽略了 Passive Event Listeners 这个东东...">
 
   <link rel="stylesheet" href="/assets/css/main.css">
-  <link rel="canonical" href="http://localhost:4000/tags">
+  <link rel="canonical" href="http://localhost:4000/blog/passive-event-listeners/">
   <link rel="alternate" type="application/rss+xml" title="Happy Birthday!" href="http://localhost:4000/feed.xml">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
   <script src="/assets/js/jquery-1.8.2.min.js"></script>
@@ -71,258 +71,81 @@
 </section>
 
 			<section style="padding-bottom: 0">
-	<article class="wrapper">
-		<div class="post-header">
-			<h2 class="blue-title text-center">Tag Archive</h2>
-			<div class="line-highlight"><i class="fa fa-paw" aria-hidden="true"></i></div>
-		</div>
-		<div class="post-content">
+		<article class="wrapper">
+			<div class="post-header">
+			<h2 class="red-title" >不得不说的 Passive Event Listeners</h2>
+			<ul class="tags">
+				
+				<li><a href="/tags#CN">CN</a></li>
+				
+				
+				<li><a href="/tags#front-end">front-end</a></li>
+				
+				
+				<li><a href="/tags#Mobile">Mobile</a></li>
+				
+				
+			</ul>
+			<div class="line-highlight">01 Jul 2017</div>
+			</div>
+			<div class="post-content">
+				<p>之前用 iScroll 做了一个图片墙，在部分 Android 机上会出现滑动时无法切换整张图片的问题，通过添加如下代码解决了该问题:</p>
+
+<figure class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="nb">document</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="dl">'</span><span class="s1">touchmove</span><span class="dl">'</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">event</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">event</span><span class="p">.</span><span class="nx">preventDefault</span><span class="p">();</span>
+<span class="p">},</span> <span class="kc">false</span><span class="p">);</span></code></pre></figure>
+
+<p>最近又被报了同样的 Bug，明明之前修复过呀，怎么又复现了，百思不得其解！拿着真机调试，发现控制台给了个 Warning，提示<code class="language-plaintext highlighter-rouge">Passvie Event Listeners</code>新特性。这是个什么东西呢？</p>
+
+<p>其实它已经有一段时间了，关注<code class="language-plaintext highlighter-rouge">2016 Google I/O Mobile Talk</code>的同学应该有些印象。它能够提升页面的滑动流畅度，以下是官方说明：</p>
+
+<blockquote>
+  <p>A new feature in the DOM spec that enable developers to opt-in to better scroll performance by eliminating the need for scrolling to block on touch and wheel event listeners.</p>
+
+  <p>Developers can annotate touch and wheel listeners with {passive: true} to indicate that they will never invoke preventDefault.</p>
+</blockquote>
+
+<p>翻译过来大概就是：</p>
+
+<blockquote>
+  <p>在监听<code class="language-plaintext highlighter-rouge">mousewheel</code>或者<code class="language-plaintext highlighter-rouge">touch</code>事件中，增加了<code class="language-plaintext highlighter-rouge">passive</code>这个设置，当它为<code class="language-plaintext highlighter-rouge">true</code>时，就表示事件处理程序不会调用<code class="language-plaintext highlighter-rouge">preventDefault</code>来阻止默认行为。</p>
+</blockquote>
+
+<p>举个例子，如果我们在 touchmove 事件调用 preventDefault，这时会禁止浏览器默认行为，页面不会滚动或缩放。浏览器无法预先知道一个监听器会不会调用 preventDefault()，它需要等监听器执行完后，再去执行默认行为，而监听器执行是要耗时的，这样就会导致页面卡顿。如果 Web 开发者能够提前告诉浏览器监听器不会调用 preventDefault 函数来阻止默认行为，那么浏览器就能快速生成事件，从而提升页面性能。passive 由此而生，我们可以通过传递 passive 为 true 来明确告诉浏览器，事件处理程序不会调用 preventDefault 来阻止默认滑动行为。</p>
+
+<p>该特性兼容<code class="language-plaintext highlighter-rouge">Chrome 51</code>和<code class="language-plaintext highlighter-rouge">Firefox 49</code>开始的浏览器，默认设置为<code class="language-plaintext highlighter-rouge">true</code>，此时<code class="language-plaintext highlighter-rouge">event.cancelable</code>为<code class="language-plaintext highlighter-rouge">false</code>。因此，可以使用如下代码告诉浏览器，监听器会使用<code class="language-plaintext highlighter-rouge">preventDefault</code>函数：</p>
+
+<figure class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="nb">document</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="dl">'</span><span class="s1">touchmove</span><span class="dl">'</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">event</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">event</span><span class="p">.</span><span class="nx">preventDefault</span><span class="p">();</span>
+<span class="p">},</span> <span class="p">{</span><span class="na">passive</span><span class="p">:</span> <span class="kc">false</span><span class="p">});</span></code></pre></figure>
+
+<p>至此，iScroll 的轮播问题就解决啦。</p>
+
+			</div>
 			
-<ul class="entry-meta">
+<div class="post-pagination">
+  
+  <a href="/blog/pocket-weather/" class="btn-pagination prev" title="口袋天气微信小程序开发总结
+"><i class="fa fa-angle-double-left" aria-hidden="true"></i> Prev</a>
   
   
-  <li><a href="#CN" class="tag"><span class="term">CN</span><span class="count">14</span></a></li>
+  <a href="/blog/meta-viewport/" class="btn-pagination next" title="由移动端 1px 过粗引发的 viewport 探究
+">Next <i class="fa fa-angle-double-right" aria-hidden="true"></i></a>
   
-  
-  <li><a href="#CSS" class="tag"><span class="term">CSS</span><span class="count">1</span></a></li>
-  
-  
-  <li><a href="#EN" class="tag"><span class="term">EN</span><span class="count">1</span></a></li>
-  
-  
-  <li><a href="#JavaScript" class="tag"><span class="term">JavaScript</span><span class="count">4</span></a></li>
-  
-  
-  <li><a href="#Mobile" class="tag"><span class="term">Mobile</span><span class="count">6</span></a></li>
-  
-  
-  <li><a href="#Plugin" class="tag"><span class="term">Plugin</span><span class="count">1</span></a></li>
-  
-  
-  <li><a href="#React" class="tag"><span class="term">React</span><span class="count">1</span></a></li>
-  
-  
-  <li><a href="#Redux" class="tag"><span class="term">Redux</span><span class="count">1</span></a></li>
-  
-  
-  <li><a href="#SQL" class="tag"><span class="term">SQL</span><span class="count">1</span></a></li>
-  
-  
-  <li><a href="#front-end" class="tag"><span class="term">front-end</span><span class="count">12</span></a></li>
-  
-  
-  <li><a href="#html" class="tag"><span class="term">html</span><span class="count">1</span></a></li>
-  
-  
-  <li><a href="#jekyll" class="tag"><span class="term">jekyll</span><span class="count">1</span></a></li>
-  
-  
-  <li><a href="#微信小程序" class="tag"><span class="term">微信小程序</span><span class="count">1</span></a></li>
-  
-  
-  <li><a href="#性能优化" class="tag"><span class="term">性能优化</span><span class="count">1</span></a></li>
-  
-  
-  <li><a href="#总结与规划" class="tag"><span class="term">总结与规划</span><span class="count">1</span></a></li>
-  
-  
-  <li><a href="#生活" class="tag"><span class="term">生活</span><span class="count">2</span></a></li>
-  
-</ul>
+</div>
 
-<h3 id="CN" class="red-title">CN</h3>
-<ul>
-    
-    <li class="entry-title"><a href="/blog/meta-viewport/" title="由移动端 1px 过粗引发的 viewport 探究">由移动端 1px 过粗引发的 viewport 探究</a></li>
-    
-    <li class="entry-title"><a href="/blog/passive-event-listeners/" title="不得不说的 Passive Event Listeners">不得不说的 Passive Event Listeners</a></li>
-    
-    <li class="entry-title"><a href="/blog/pocket-weather/" title="口袋天气微信小程序开发总结">口袋天气微信小程序开发总结</a></li>
-    
-    <li class="entry-title"><a href="/blog/byr-bbs-memory/" title="明光以北，蓟门以南">明光以北，蓟门以南</a></li>
-    
-    <li class="entry-title"><a href="/blog/web-debug-in-mobile/" title="移动端 Web 页面调试指南">移动端 Web 页面调试指南</a></li>
-    
-    <li class="entry-title"><a href="/blog/sql-notes/" title="数据库知识点总结">数据库知识点总结</a></li>
-    
-    <li class="entry-title"><a href="/blog/fe-optimizing/" title="前端性能优化总结">前端性能优化总结</a></li>
-    
-    <li class="entry-title"><a href="/blog/mercator-and-lonlat/" title="JS 实现墨卡托坐标到经纬度坐标的转换">JS 实现墨卡托坐标到经纬度坐标的转换</a></li>
-    
-    <li class="entry-title"><a href="/blog/mobile-slide-plugin/" title="基于 JS 的移动端滑动插件对比">基于 JS 的移动端滑动插件对比</a></li>
-    
-    <li class="entry-title"><a href="/blog/web-call-app/" title="JS 实现页面调起原生 APP">JS 实现页面调起原生 APP</a></li>
-    
-    <li class="entry-title"><a href="/blog/react-selector/" title="React + Redux 实战：Selector App">React + Redux 实战：Selector App</a></li>
-    
-    <li class="entry-title"><a href="/blog/photo-mask/" title="CSS 实现移动端图片点击的遮罩效果">CSS 实现移动端图片点击的遮罩效果</a></li>
-    
-    <li class="entry-title"><a href="/blog/javascript-reading-notes/" title="学习笔记之《JavaScript 高级程序设计》（上篇）">学习笔记之《JavaScript 高级程序设计》（上篇）</a></li>
-    
-    <li class="entry-title"><a href="/blog/review-and-plan/" title="写在学期初：年中总结与规划">写在学期初：年中总结与规划</a></li>
-    
-  </ul>
-
-<h3 id="CSS" class="red-title">CSS</h3>
-<ul>
-    
-    <li class="entry-title"><a href="/blog/photo-mask/" title="CSS 实现移动端图片点击的遮罩效果">CSS 实现移动端图片点击的遮罩效果</a></li>
-    
-  </ul>
-
-<h3 id="EN" class="red-title">EN</h3>
-<ul>
-    
-    <li class="entry-title"><a href="/blog/ice-bear-jekyll-theme/" title="Ice Bear Jekyll Theme">Ice Bear Jekyll Theme</a></li>
-    
-  </ul>
-
-<h3 id="JavaScript" class="red-title">JavaScript</h3>
-<ul>
-    
-    <li class="entry-title"><a href="/blog/mercator-and-lonlat/" title="JS 实现墨卡托坐标到经纬度坐标的转换">JS 实现墨卡托坐标到经纬度坐标的转换</a></li>
-    
-    <li class="entry-title"><a href="/blog/mobile-slide-plugin/" title="基于 JS 的移动端滑动插件对比">基于 JS 的移动端滑动插件对比</a></li>
-    
-    <li class="entry-title"><a href="/blog/web-call-app/" title="JS 实现页面调起原生 APP">JS 实现页面调起原生 APP</a></li>
-    
-    <li class="entry-title"><a href="/blog/javascript-reading-notes/" title="学习笔记之《JavaScript 高级程序设计》（上篇）">学习笔记之《JavaScript 高级程序设计》（上篇）</a></li>
-    
-  </ul>
-
-<h3 id="Mobile" class="red-title">Mobile</h3>
-<ul>
-    
-    <li class="entry-title"><a href="/blog/meta-viewport/" title="由移动端 1px 过粗引发的 viewport 探究">由移动端 1px 过粗引发的 viewport 探究</a></li>
-    
-    <li class="entry-title"><a href="/blog/passive-event-listeners/" title="不得不说的 Passive Event Listeners">不得不说的 Passive Event Listeners</a></li>
-    
-    <li class="entry-title"><a href="/blog/web-debug-in-mobile/" title="移动端 Web 页面调试指南">移动端 Web 页面调试指南</a></li>
-    
-    <li class="entry-title"><a href="/blog/mobile-slide-plugin/" title="基于 JS 的移动端滑动插件对比">基于 JS 的移动端滑动插件对比</a></li>
-    
-    <li class="entry-title"><a href="/blog/web-call-app/" title="JS 实现页面调起原生 APP">JS 实现页面调起原生 APP</a></li>
-    
-    <li class="entry-title"><a href="/blog/photo-mask/" title="CSS 实现移动端图片点击的遮罩效果">CSS 实现移动端图片点击的遮罩效果</a></li>
-    
-  </ul>
-
-<h3 id="Plugin" class="red-title">Plugin</h3>
-<ul>
-    
-    <li class="entry-title"><a href="/blog/mobile-slide-plugin/" title="基于 JS 的移动端滑动插件对比">基于 JS 的移动端滑动插件对比</a></li>
-    
-  </ul>
-
-<h3 id="React" class="red-title">React</h3>
-<ul>
-    
-    <li class="entry-title"><a href="/blog/react-selector/" title="React + Redux 实战：Selector App">React + Redux 实战：Selector App</a></li>
-    
-  </ul>
-
-<h3 id="Redux" class="red-title">Redux</h3>
-<ul>
-    
-    <li class="entry-title"><a href="/blog/react-selector/" title="React + Redux 实战：Selector App">React + Redux 实战：Selector App</a></li>
-    
-  </ul>
-
-<h3 id="SQL" class="red-title">SQL</h3>
-<ul>
-    
-    <li class="entry-title"><a href="/blog/sql-notes/" title="数据库知识点总结">数据库知识点总结</a></li>
-    
-  </ul>
-
-<h3 id="front-end" class="red-title">front-end</h3>
-<ul>
-    
-    <li class="entry-title"><a href="/blog/meta-viewport/" title="由移动端 1px 过粗引发的 viewport 探究">由移动端 1px 过粗引发的 viewport 探究</a></li>
-    
-    <li class="entry-title"><a href="/blog/passive-event-listeners/" title="不得不说的 Passive Event Listeners">不得不说的 Passive Event Listeners</a></li>
-    
-    <li class="entry-title"><a href="/blog/pocket-weather/" title="口袋天气微信小程序开发总结">口袋天气微信小程序开发总结</a></li>
-    
-    <li class="entry-title"><a href="/blog/web-debug-in-mobile/" title="移动端 Web 页面调试指南">移动端 Web 页面调试指南</a></li>
-    
-    <li class="entry-title"><a href="/blog/fe-optimizing/" title="前端性能优化总结">前端性能优化总结</a></li>
-    
-    <li class="entry-title"><a href="/blog/mercator-and-lonlat/" title="JS 实现墨卡托坐标到经纬度坐标的转换">JS 实现墨卡托坐标到经纬度坐标的转换</a></li>
-    
-    <li class="entry-title"><a href="/blog/mobile-slide-plugin/" title="基于 JS 的移动端滑动插件对比">基于 JS 的移动端滑动插件对比</a></li>
-    
-    <li class="entry-title"><a href="/blog/web-call-app/" title="JS 实现页面调起原生 APP">JS 实现页面调起原生 APP</a></li>
-    
-    <li class="entry-title"><a href="/blog/react-selector/" title="React + Redux 实战：Selector App">React + Redux 实战：Selector App</a></li>
-    
-    <li class="entry-title"><a href="/blog/photo-mask/" title="CSS 实现移动端图片点击的遮罩效果">CSS 实现移动端图片点击的遮罩效果</a></li>
-    
-    <li class="entry-title"><a href="/blog/ice-bear-jekyll-theme/" title="Ice Bear Jekyll Theme">Ice Bear Jekyll Theme</a></li>
-    
-    <li class="entry-title"><a href="/blog/javascript-reading-notes/" title="学习笔记之《JavaScript 高级程序设计》（上篇）">学习笔记之《JavaScript 高级程序设计》（上篇）</a></li>
-    
-  </ul>
-
-<h3 id="html" class="red-title">html</h3>
-<ul>
-    
-    <li class="entry-title"><a href="/blog/meta-viewport/" title="由移动端 1px 过粗引发的 viewport 探究">由移动端 1px 过粗引发的 viewport 探究</a></li>
-    
-  </ul>
-
-<h3 id="jekyll" class="red-title">jekyll</h3>
-<ul>
-    
-    <li class="entry-title"><a href="/blog/ice-bear-jekyll-theme/" title="Ice Bear Jekyll Theme">Ice Bear Jekyll Theme</a></li>
-    
-  </ul>
-
-<h3 id="微信小程序" class="red-title">微信小程序</h3>
-<ul>
-    
-    <li class="entry-title"><a href="/blog/pocket-weather/" title="口袋天气微信小程序开发总结">口袋天气微信小程序开发总结</a></li>
-    
-  </ul>
-
-<h3 id="性能优化" class="red-title">性能优化</h3>
-<ul>
-    
-    <li class="entry-title"><a href="/blog/fe-optimizing/" title="前端性能优化总结">前端性能优化总结</a></li>
-    
-  </ul>
-
-<h3 id="总结与规划" class="red-title">总结与规划</h3>
-<ul>
-    
-    <li class="entry-title"><a href="/blog/review-and-plan/" title="写在学期初：年中总结与规划">写在学期初：年中总结与规划</a></li>
-    
-  </ul>
-
-<h3 id="生活" class="red-title">生活</h3>
-<ul>
-    
-    <li class="entry-title"><a href="/blog/byr-bbs-memory/" title="明光以北，蓟门以南">明光以北，蓟门以南</a></li>
-    
-    <li class="entry-title"><a href="/blog/review-and-plan/" title="写在学期初：年中总结与规划">写在学期初：年中总结与规划</a></li>
-    
-  </ul>
-
-		</div>
-		
+			
 <div style="margin-top:30px">
-    <a href="https://twitter.com/intent/tweet?text=http://localhost:4000/tags" class="share-btn twitter-btn" title="Share on Twitter"><i class="fa fa-fw fa-twitter" aria-hidden="true"></i></a>
-    <a href="https://plus.google.com/share?url=http://localhost:4000/tags" class="share-btn googleplus-btn" title="Share on Google Plus"><i class="fa fa-fw fa-google-plus" aria-hidden="true"></i></a>
-    <a href="https://www.facebook.com/sharer/sharer.php?u=http://localhost:4000/tags" class="share-btn facebook-btn" title="Share on Facebook"><i class="fa fa-fw fa-facebook" aria-hidden="true"></i></a>
-    <a href="http://v.t.sina.com.cn/share/share.php?title=http://localhost:4000/tags" class="share-btn weibo-btn" title="Share on Sina Weibo"><i class="fa fa-fw fa-weibo" aria-hidden="true"></i></a>
+    <a href="https://twitter.com/intent/tweet?text=http://localhost:4000/blog/passive-event-listeners/" class="share-btn twitter-btn" title="Share on Twitter"><i class="fa fa-fw fa-twitter" aria-hidden="true"></i></a>
+    <a href="https://plus.google.com/share?url=http://localhost:4000/blog/passive-event-listeners/" class="share-btn googleplus-btn" title="Share on Google Plus"><i class="fa fa-fw fa-google-plus" aria-hidden="true"></i></a>
+    <a href="https://www.facebook.com/sharer/sharer.php?u=http://localhost:4000/blog/passive-event-listeners/" class="share-btn facebook-btn" title="Share on Facebook"><i class="fa fa-fw fa-facebook" aria-hidden="true"></i></a>
+    <a href="http://v.t.sina.com.cn/share/share.php?title=http://localhost:4000/blog/passive-event-listeners/" class="share-btn weibo-btn" title="Share on Sina Weibo"><i class="fa fa-fw fa-weibo" aria-hidden="true"></i></a>
 </div>
 
 
-	</article>
+		</article>
 	</section>
-	
-		
-			<section id="comments">
+	<section id="comments">
     <div class="wrapper">
         <div class="line-highlight"><i class="fa fa-paw" aria-hidden="true"></i></div>
 		
