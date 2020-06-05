@@ -27,15 +27,15 @@ sass:
 #   # laibili: MTAyMC8yODgzNC81NDA0
 #   gitalk: true
 
-# # Website analytics
-# google_analytics: UA-82494501-1
+# Website analytics
+google_analytics: UA-168225977-1
 # baidu_analytics: 5b31ffbbdc6cff18727f3adf75a03777    #from //hm.baidu.com/hm.js?***
 
 # Author information:
 author:
   #resume: /resume
   name: Souvik Saha     #the name of Blog section
-#   about_me: Happy Birthday Utkarsha! <3
+  # about_me: Happy Birthday Utkarsha! <3
  
 # Social Links
 # email:               hi@ikongsong.com
